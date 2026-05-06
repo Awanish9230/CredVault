@@ -1,17 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { ShieldCheck, Search, CheckCircle, XCircle, AlertCircle, Calendar, User, Briefcase, Award } from 'lucide-react';
+import { ShieldCheck, Search, CheckCircle, XCircle, AlertCircle, Calendar, User, Briefcase, Award, Download, Printer } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
+import { CertificateTemplate } from '../../components/certificate/CertificateTemplate';
 
 const VerifyCertificate = () => {
     const { certId } = useParams();
     const navigate = useNavigate();
+    const certRef = useRef(null);
     const [searchId, setSearchId] = useState(certId || '');
     const [status, setStatus] = useState('idle'); // idle, loading, valid, revoked, not-found
     const [certificate, setCertificate] = useState(null);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     useEffect(() => {
         if (certId) {
@@ -39,6 +44,35 @@ const VerifyCertificate = () => {
         } catch (error) {
             setStatus('not-found');
             setCertificate(null);
+        }
+    };
+
+    const downloadPDF = async () => {
+        if (!certRef.current) return;
+        setIsDownloading(true);
+
+        try {
+            const canvas = await html2canvas(certRef.current, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: null
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'landscape',
+                unit: 'px',
+                format: [800, 600]
+            });
+
+            pdf.addImage(imgData, 'PNG', 0, 0, 800, 600);
+            pdf.save(`${certificate.recipientName.replace(/\s+/g, '_')}_Certificate.pdf`);
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert('Failed to generate PDF. Please try again.');
+        } finally {
+            setIsDownloading(false);
         }
     };
 
@@ -86,47 +120,56 @@ const VerifyCertificate = () => {
                 )}
 
                 {status === 'valid' && certificate && (
-                    <Card className="w-full max-w-3xl overflow-hidden animate-slide-up border border-green-200">
-                        <div className="bg-green-50 border-b border-green-100 p-6 flex items-center justify-center gap-3 text-green-700">
-                            <CheckCircle size={32} />
-                            <div>
-                                <h2 className="text-2xl font-bold">Certificate is Valid</h2>
-                                <p className="text-green-600 font-medium">Authenticity verified on {new Date().toLocaleDateString()}</p>
+                    <div className="w-full max-w-5xl space-y-8 animate-slide-up">
+                        <div className="flex flex-col md:flex-row gap-8 items-start justify-center">
+                            {/* Certificate Preview */}
+                            <div className="flex-1 flex flex-col items-center">
+                                <div className="bg-white p-4 rounded-2xl shadow-2xl border border-border overflow-hidden scale-[0.4] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 origin-top">
+                                    <div ref={certRef}>
+                                        <CertificateTemplate data={{
+                                            ...certificate,
+                                            issueDate: certificate.createdAt
+                                        }} id="public-cert-view" />
+                                    </div>
+                                </div>
+                                <div className="mt-4 flex gap-4">
+                                    <Button onClick={downloadPDF} disabled={isDownloading} className="gap-2">
+                                        {isDownloading ? 'Generating...' : <><Download size={18}/> Download PDF</>}
+                                    </Button>
+                                    <Button variant="outline" onClick={() => window.print()} className="gap-2">
+                                        <Printer size={18}/> Print
+                                    </Button>
+                                </div>
                             </div>
+
+                            {/* Validation Details */}
+                            <Card className="w-full max-w-sm overflow-hidden border border-green-200">
+                                <div className="bg-green-50 border-b border-green-100 p-6 flex flex-col items-center text-center gap-2 text-green-700">
+                                    <CheckCircle size={48} className="mb-2" />
+                                    <h2 className="text-xl font-bold">Certificate Verified</h2>
+                                    <p className="text-green-600 text-sm font-medium">Authenticity confirmed by CredVault</p>
+                                </div>
+                                <div className="p-6 space-y-4">
+                                    <div className="pb-4 border-b border-border">
+                                        <p className="text-xs text-muted uppercase tracking-wider mb-1">Issued To</p>
+                                        <p className="text-lg font-bold text-heading">{certificate.recipientName}</p>
+                                    </div>
+                                    <div className="pb-4 border-b border-border">
+                                        <p className="text-xs text-muted uppercase tracking-wider mb-1">Credential Type</p>
+                                        <p className="font-semibold text-primary">{certificate.certType}</p>
+                                    </div>
+                                    <div className="pb-4 border-b border-border">
+                                        <p className="text-xs text-muted uppercase tracking-wider mb-1">Issue Date</p>
+                                        <p className="font-medium text-heading">{new Date(certificate.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted uppercase tracking-wider mb-1">Certificate ID</p>
+                                        <p className="font-mono text-xs font-bold bg-soft p-2 rounded border border-border text-heading">{certificate.certId}</p>
+                                    </div>
+                                </div>
+                            </Card>
                         </div>
-                        <div className="p-8 grid md:grid-cols-2 gap-8">
-                            <div className="space-y-6">
-                                <div>
-                                    <p className="text-sm text-muted flex items-center gap-2 mb-1"><User size={16}/> Recipient Name</p>
-                                    <p className="text-xl font-bold text-heading">{certificate.recipientName}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted flex items-center gap-2 mb-1"><Briefcase size={16}/> Role & Programme</p>
-                                    <p className="font-medium text-heading">{certificate.role}</p>
-                                    <p className="text-body">{certificate.programme}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted flex items-center gap-2 mb-1"><Calendar size={16}/> Issued Date</p>
-                                    <p className="font-medium text-heading">{new Date(certificate.createdAt).toLocaleDateString()}</p>
-                                </div>
-                            </div>
-                            <div className="space-y-6 border-t md:border-t-0 md:border-l border-border pt-6 md:pt-0 md:pl-8">
-                                <div>
-                                    <p className="text-sm text-muted flex items-center gap-2 mb-1"><Award size={16}/> Certificate Type</p>
-                                    <p className="font-medium text-primary bg-primary-soft px-3 py-1 rounded-md inline-block">{certificate.certType}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted mb-1">Issuing Authority</p>
-                                    <p className="font-medium text-heading">{certificate.issuedBy}</p>
-                                    <p className="text-body">{certificate.issuingOrg}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted mb-1">Certificate ID</p>
-                                    <p className="font-mono text-sm font-bold bg-soft px-3 py-2 rounded border border-border inline-block text-heading">{certificate.certId}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </Card>
+                    </div>
                 )}
 
                 {status === 'revoked' && certificate && (
@@ -161,3 +204,4 @@ const VerifyCertificate = () => {
 };
 
 export default VerifyCertificate;
+

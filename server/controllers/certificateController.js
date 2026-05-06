@@ -1,5 +1,6 @@
 const Certificate = require('../models/Certificate');
 const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
 
 // Generate unique cert ID
 const generateCertId = (type) => {
@@ -45,6 +46,31 @@ exports.generateCertificate = async (req, res, next) => {
             template,
             generatedBy: req.user.id
         });
+
+        // Send email with the certificate link
+        if (recipientEmail) {
+            try {
+                const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                const verifyUrl = `${frontendUrl}/verify/${certId}`;
+                
+                const message = `
+                    <h2>Congratulations ${recipientName}!</h2>
+                    <p>Your <strong>${certType}</strong> certificate for <strong>${role}</strong> at ${issuingOrg} has been successfully generated.</p>
+                    <p>You can view and verify your official digital certificate by clicking the link below:</p>
+                    <a href="${verifyUrl}" style="display: inline-block; padding: 10px 20px; margin-top: 10px; background-color: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 5px;">View Certificate</a>
+                    <p>Alternatively, you can verify it using this Certificate ID: <strong>${certId}</strong> on our portal.</p>
+                `;
+
+                await sendEmail({
+                    email: recipientEmail,
+                    subject: 'Your Certificate has been Generated - CredVault',
+                    message
+                });
+            } catch (emailError) {
+                console.error('Email could not be sent', emailError);
+                // We still return 201 as the cert was generated, even if email failed
+            }
+        }
 
         res.status(201).json({ success: true, data: certificate });
     } catch (error) {
