@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileBadge2, LogOut, Table2, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, FileBadge2, LogOut, Table2, Settings as SettingsIcon, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminSidebar = () => {
@@ -45,6 +45,16 @@ const AdminSidebar = () => {
                         {link.label}
                     </NavLink>
                 ))}
+                
+                <a 
+                    href="/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium text-body hover:bg-soft hover:text-heading mt-4 border-t border-border/50 pt-6"
+                >
+                    <ExternalLink size={20} />
+                    Visit Site
+                </a>
             </nav>
 
             <div className="p-4 border-t border-border">
