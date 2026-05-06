@@ -7,6 +7,8 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/admin/Dashboard';
 import GenerateCertificate from './pages/admin/GenerateCertificate';
+import ManageCertificates from './pages/admin/ManageCertificates';
+import Settings from './pages/admin/Settings';
 import VerifyCertificate from './pages/public/VerifyCertificate';
 
 // Layout
@@ -33,6 +35,8 @@ function App() {
         <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="generate" element={<GenerateCertificate />} />
+          <Route path="manage" element={<ManageCertificates />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>

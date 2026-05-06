@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileBadge2, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileBadge2, LogOut, Table2, Settings as SettingsIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const AdminSidebar = () => {
@@ -14,7 +14,9 @@ const AdminSidebar = () => {
 
     const links = [
         { path: '/admin', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-        { path: '/admin/generate', icon: <FileBadge2 size={20} />, label: 'Generate' }
+        { path: '/admin/generate', icon: <FileBadge2 size={20} />, label: 'Generate' },
+        { path: '/admin/manage', icon: <Table2 size={20} />, label: 'Manage' },
+        { path: '/admin/settings', icon: <SettingsIcon size={20} />, label: 'Settings' }
     ];
 
     return (

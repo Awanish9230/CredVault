@@ -80,3 +80,50 @@ exports.seedAdmin = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.updateProfile = async (req, res, next) => {
+    try {
+        const { name, email } = req.body;
+        
+        const user = await User.findById(req.user.id);
+        
+        if (name) user.name = name;
+        if (email) user.email = email;
+        
+        await user.save();
+        
+        res.status(200).json({
+            success: true,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                organisation: user.organisation
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.updatePassword = async (req, res, next) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        
+        const user = await User.findById(req.user.id);
+        
+        if (!(await bcrypt.compare(currentPassword, user.password))) {
+            return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+        }
+        
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        
+        await user.save();
+        
+        res.status(200).json({ success: true, message: 'Password updated successfully' });
+    } catch (error) {
+        next(error);
+    }
+};

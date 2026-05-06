@@ -109,14 +109,37 @@ exports.getCertificates = async (req, res, next) => {
         const startIndex = (page - 1) * limit;
 
         const filter = {};
+        
+        // Search filter
         if (req.query.search) {
             filter.$or = [
                 { recipientName: { $regex: req.query.search, $options: 'i' } },
                 { certId: { $regex: req.query.search, $options: 'i' } }
             ];
         }
+        
+        // Status filter
         if (req.query.status) {
             filter.status = req.query.status;
+        }
+
+        // Date filters
+        const now = new Date();
+        if (req.query.dateRange === 'today') {
+            const startOfToday = new Date(now.setHours(0,0,0,0));
+            filter.createdAt = { $gte: startOfToday };
+        } else if (req.query.dateRange === 'weekly') {
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+            startOfWeek.setHours(0,0,0,0);
+            filter.createdAt = { $gte: startOfWeek };
+        } else if (req.query.dateRange === 'monthly') {
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            filter.createdAt = { $gte: startOfMonth };
+        } else if (req.query.startDate && req.query.endDate) {
+            filter.createdAt = {
+                $gte: new Date(req.query.startDate),
+                $lte: new Date(req.query.endDate)
+            };
         }
 
         const total = await Certificate.countDocuments(filter);
@@ -199,6 +222,46 @@ exports.revokeCertificate = async (req, res, next) => {
         await certificate.save();
 
         res.status(200).json({ success: true, data: certificate });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Update a certificate
+// @route   PUT /api/certificates/:certId
+// @access  Private (Admin)
+exports.updateCertificate = async (req, res, next) => {
+    try {
+        let certificate = await Certificate.findOne({ certId: req.params.certId });
+        if (!certificate) {
+            return res.status(404).json({ success: false, message: 'Certificate not found' });
+        }
+
+        certificate = await Certificate.findOneAndUpdate(
+            { certId: req.params.certId },
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        res.status(200).json({ success: true, data: certificate });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Delete a certificate
+// @route   DELETE /api/certificates/:certId
+// @access  Private (Admin)
+exports.deleteCertificate = async (req, res, next) => {
+    try {
+        const certificate = await Certificate.findOne({ certId: req.params.certId });
+        if (!certificate) {
+            return res.status(404).json({ success: false, message: 'Certificate not found' });
+        }
+
+        await certificate.deleteOne();
+
+        res.status(200).json({ success: true, message: 'Certificate deleted successfully' });
     } catch (error) {
         next(error);
     }
