@@ -1,54 +1,53 @@
-const sendEmail = async (options) => {
-    const apiKey = (process.env.SMTP_PASSWORD || '').trim();
-    const fromEmail = (process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL || '').trim();
+const nodemailer = require('nodemailer');
 
-    if (!apiKey) {
-        console.warn('[Email] SMTP_PASSWORD (API Key) is missing.');
-        return { messageId: 'missing-key' };
+const sendEmail = async (options) => {
+    const smtpUser = process.env.SMTP_EMAIL;
+    const smtpPass = process.env.SMTP_PASSWORD;
+    const fromEmail = process.env.SMTP_FROM_EMAIL || smtpUser;
+
+    if (!smtpUser || !smtpPass) {
+        console.warn('[Email] Missing SMTP credentials.');
+        return;
     }
 
-    console.log(`[Email] Sending via Brevo API | From: ${fromEmail} | To: ${options.email}`);
+    // Port 2525 is the most reliable port for Brevo on Render
+    const transporter = nodemailer.createTransport({
+        host: 'smtp-relay.brevo.com',
+        port: 2525,
+        secure: false, // Port 2525 does not use SSL/TLS directly
+        auth: {
+            user: smtpUser,
+            pass: smtpPass
+        },
+        // High timeouts for Render stability
+        connectionTimeout: 30000, 
+        greetingTimeout: 30000,
+        socketTimeout: 30000,
+        tls: {
+            rejectUnauthorized: false
+        }
+    });
+
+    const mailOptions = {
+        from: `CredVault <${fromEmail}>`,
+        to: options.email,
+        subject: options.subject,
+        html: options.message
+    };
 
     try {
-        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-                'api-key': apiKey,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                sender: { 
-                    name: 'CredVault', 
-                    email: fromEmail 
-                },
-                to: [{ email: options.email }],
-                subject: options.subject,
-                htmlContent: options.message
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            console.log('[Email] Success! Message ID:', data.messageId);
-            return data;
-        } else {
-            console.error('[Email] Brevo API Error Detail:', JSON.stringify(data));
-            
-            if (data.code === 'unauthorized' || data.message === 'Key not found') {
-                console.error('[Email] CRITICAL: The API Key is invalid or the Sender Email is not verified in Brevo.');
-            }
-            
-            throw new Error(data.message || 'Brevo API error');
-        }
+        console.log(`[Email] Attempting SMTP delivery to ${options.email} via Port 2525...`);
+        const info = await transporter.sendMail(mailOptions);
+        console.log('[Email] Success! Message ID:', info.messageId);
+        return info;
     } catch (error) {
-        console.error('[Email] Error:', error.message);
+        console.error('[Email] SMTP Error:', error.message);
         throw new Error(`Email failed: ${error.message}`);
     }
 };
 
 module.exports = sendEmail;
+
 
 
 
