@@ -25,7 +25,7 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use('/uploads', express.static('uploads'));
+// app.use('/uploads', express.static('uploads')); // Removed in favor of GridFS
 
 app.use((req, res, next) => {
     ['body', 'params', 'headers', 'query'].forEach(function (key) {

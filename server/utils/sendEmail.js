@@ -3,47 +3,64 @@ const nodemailer = require('nodemailer');
 const sendEmail = async (options) => {
     let transporter;
 
-    if (process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD) {
+    const smtpHost = process.env.SMTP_HOST || 'smtp-relay.brevo.com';
+    const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+    const smtpUser = process.env.SMTP_EMAIL;
+    const smtpPass = process.env.SMTP_PASSWORD;
+
+    if (smtpUser && smtpPass) {
+        console.log(`Configuring SMTP with ${smtpHost}:${smtpPort}`);
         transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-            port: parseInt(process.env.SMTP_PORT || '587', 10),
-            secure: (process.env.SMTP_PORT === '465'), // true for 465, false for other ports
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpPort === 465, // true for 465, false for other ports
             auth: {
-                user: process.env.SMTP_EMAIL,
-                pass: process.env.SMTP_PASSWORD
+                user: smtpUser,
+                pass: smtpPass
             },
-            connectionTimeout: 10000, // 10 seconds
-            greetingTimeout: 10000,
-            socketTimeout: 15000
+            // Production recommended settings
+            pool: true,
+            maxConnections: 5,
+            maxMessages: 100,
+            tls: {
+                rejectUnauthorized: false // Helps with some hosting providers
+            }
         });
     } else {
+        console.log('No SMTP credentials found, using Ethereal for testing');
         const testAccount = await nodemailer.createTestAccount();
         transporter = nodemailer.createTransport({
             host: 'smtp.ethereal.email',
             port: 587,
-            secure: false, // true for 465, false for other ports
+            secure: false,
             auth: {
                 user: testAccount.user,
                 pass: testAccount.pass
             }
         });
-        console.log('Using Ethereal Email for testing. Please check console logs for the email preview URL.');
     }
 
     const mailOptions = {
-        from: `CredVault <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL || 'noreply@credvault.local'}>`,
+        from: `CredVault <${process.env.SMTP_FROM_EMAIL || smtpUser || 'noreply@credvault.com'}>`,
         to: options.email,
         subject: options.subject,
         html: options.message
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    
-    if (!process.env.SMTP_EMAIL) {
-        console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent successfully:', info.messageId);
+        
+        if (!smtpUser) {
+            console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+        }
+        
+        return info;
+    } catch (error) {
+        console.error('Error sending email:', error);
+        throw new Error('Email delivery failed. Please check server logs.');
     }
-    
-    return info;
 };
 
 module.exports = sendEmail;
+

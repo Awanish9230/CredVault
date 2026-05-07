@@ -27,8 +27,9 @@ const Settings = () => {
         const fetchSettings = async () => {
             try {
                 const res = await api.get('/settings');
+                const baseUrl = import.meta.env.VITE_API_URL || 'https://credvault-kyqn.onrender.com';
                 if (res.data.data.heroBackgroundImage) {
-                    setHeroImagePreview(`${import.meta.env.VITE_API_URL || 'https://credvault-kyqn.onrender.com'}${res.data.data.heroBackgroundImage}`);
+                    setHeroImagePreview(`${baseUrl}${res.data.data.heroBackgroundImage}`);
                 }
                 if (res.data.data.heroOverlayOpacity !== undefined) {
                     setHeroOpacity(res.data.data.heroOverlayOpacity);
@@ -39,6 +40,7 @@ const Settings = () => {
         };
         fetchSettings();
     }, []);
+
 
     const handleProfileUpdate = async (e) => {
         e.preventDefault();
@@ -92,13 +94,22 @@ const Settings = () => {
             const res = await api.put('/settings/hero-image', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            setStatus({ type: 'success', message: 'Hero image updated successfully!' });
+            
+            // Update preview with the new GridFS URL
+            if (res.data.data.heroBackgroundImage) {
+                const baseUrl = import.meta.env.VITE_API_URL || 'https://credvault-kyqn.onrender.com';
+                setHeroImagePreview(`${baseUrl}${res.data.data.heroBackgroundImage}`);
+            }
+            
+            setStatus({ type: 'success', message: 'Hero image updated successfully and saved to database!' });
+            setHeroImage(null); // Clear the file input state
         } catch (error) {
-            setStatus({ type: 'error', message: 'Failed to upload hero image' });
+            setStatus({ type: 'error', message: error.response?.data?.message || 'Failed to upload hero image' });
         } finally {
             setLoading(false);
         }
     };
+
 
     const handleOpacityChange = async (val) => {
         setHeroOpacity(val);

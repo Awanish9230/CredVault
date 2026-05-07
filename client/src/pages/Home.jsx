@@ -27,6 +27,7 @@ const Home = () => {
       }
     : {};
 
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <nav className="glass-effect sticky top-0 z-50 flex items-center justify-between px-8 py-4">
