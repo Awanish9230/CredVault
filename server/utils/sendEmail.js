@@ -1,80 +1,53 @@
-const nodemailer = require('nodemailer');
-
 const sendEmail = async (options) => {
-    let transporter;
+    const apiKey = process.env.SMTP_PASSWORD;
+    const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL;
 
-    const smtpHost = process.env.SMTP_HOST || 'smtp-relay.brevo.com';
-    const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
-    const smtpUser = process.env.SMTP_EMAIL;
-    const smtpPass = process.env.SMTP_PASSWORD;
-
-    if (smtpUser && smtpPass) {
-        console.log(`[Email] Attempting to configure SMTP: ${smtpHost}:${smtpPort}`);
-        transporter = nodemailer.createTransport({
-            host: smtpHost,
-            port: smtpPort,
-            secure: smtpPort === 465, // true for 465, false for other ports
-            auth: {
-                user: smtpUser,
-                pass: smtpPass
-            },
-            pool: true,
-            maxConnections: 5,
-            maxMessages: 100,
-            tls: {
-                rejectUnauthorized: false
-            }
-        });
-
-        // Verify connection configuration
-        try {
-            await transporter.verify();
-            console.log('[Email] SMTP Connection Verified Successfully');
-        } catch (verifyError) {
-            console.error('[Email] SMTP Verification Failed:', verifyError.message);
-            // We'll still try to send, but this is a major red flag
-        }
-    } else {
-        console.log('[Email] No SMTP credentials found, using Ethereal for testing');
-        const testAccount = await nodemailer.createTestAccount();
-        transporter = nodemailer.createTransport({
-            host: 'smtp.ethereal.email',
-            port: 587,
-            secure: false,
-            auth: {
-                user: testAccount.user,
-                pass: testAccount.pass
-            }
-        });
+    if (!apiKey || apiKey.startsWith('xsmtpsib') === false) {
+        console.warn('[Email] Valid Brevo API Key not found. Falling back to log-only mode.');
+        console.log('--- Email Content ---');
+        console.log('To:', options.email);
+        console.log('Subject:', options.subject);
+        console.log('--------------------');
+        return { messageId: 'log-only' };
     }
 
-    const fromEmail = process.env.SMTP_FROM_EMAIL || smtpUser || 'noreply@credvault.com';
-    const mailOptions = {
-        from: `CredVault <${fromEmail}>`,
-        to: options.email,
-        subject: options.subject,
-        html: options.message
-    };
+    console.log(`[Email] Sending via Brevo HTTP API to: ${options.email}`);
 
     try {
-        console.log(`[Email] Sending email to: ${options.email}`);
-        const info = await transporter.sendMail(mailOptions);
-        console.log('[Email] Message sent: %s', info.messageId);
-        
-        if (!smtpUser) {
-            console.log('[Email] Preview URL: %s', nodemailer.getTestMessageUrl(info));
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': apiKey,
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                sender: { 
+                    name: 'CredVault', 
+                    email: fromEmail || 'noreply@credvault.com' 
+                },
+                to: [{ email: options.email }],
+                subject: options.subject,
+                htmlContent: options.message
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            console.log('[Email] Success! Message ID:', data.messageId);
+            return data;
+        } else {
+            console.error('[Email] Brevo API Error:', data.message || data);
+            throw new Error(data.message || 'Brevo API request failed');
         }
-        
-        return info;
     } catch (error) {
-        console.error('[Email] Send error:', error.message);
-        if (error.code === 'EAUTH') {
-            console.error('[Email] Authentication failed. Please check SMTP_EMAIL and SMTP_PASSWORD.');
-        }
-        throw new Error(`Email delivery failed: ${error.message}`);
+        console.error('[Email] Critical error:', error.message);
+        throw new Error(`Email failed: ${error.message}`);
     }
 };
 
 module.exports = sendEmail;
+
 
 
