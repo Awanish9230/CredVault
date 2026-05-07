@@ -6,8 +6,10 @@ const {
     getStats,
     revokeCertificate,
     updateCertificate,
-    deleteCertificate
+    deleteCertificate,
+    resendCertificateEmail
 } = require('../controllers/certificateController');
+
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
@@ -20,7 +22,9 @@ router.post('/generate', generateCertificate);
 router.get('/', getCertificates);
 router.get('/stats', getStats);
 router.put('/:certId', updateCertificate);
+router.post('/:certId/resend', resendCertificateEmail);
 router.patch('/:certId/revoke', revokeCertificate);
 router.delete('/:certId', deleteCertificate);
+
 
 module.exports = router;

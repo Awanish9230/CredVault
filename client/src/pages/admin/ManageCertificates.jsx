@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Eye, Edit2, Trash2, Ban, Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from 'lucide-react';
+import { Search, Filter, Eye, Edit2, Trash2, Ban, Download, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, Mail } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -102,6 +102,16 @@ const ManageCertificates = () => {
             fetchCertificates();
         } catch (error) {
             alert('Failed to update certificate');
+        }
+    };
+
+    const handleResendEmail = async (certId) => {
+        try {
+            await api.post(`/certificates/${certId}/resend`);
+            alert('Email resent successfully!');
+        } catch (error) {
+            console.error("Failed to resend email", error);
+            alert(error.response?.data?.message || 'Failed to resend email');
         }
     };
 
@@ -235,6 +245,15 @@ const ManageCertificates = () => {
                                                 >
                                                     <Edit2 size={18} />
                                                 </button>
+                                                {cert.status === 'active' && (
+                                                    <button 
+                                                        onClick={() => handleResendEmail(cert.certId)}
+                                                        className="p-2 text-primary hover:bg-primary-soft rounded-lg transition-all"
+                                                        title="Resend Email"
+                                                    >
+                                                        <Mail size={18} />
+                                                    </button>
+                                                )}
                                                 {cert.status === 'active' && (
                                                     <button 
                                                         onClick={() => handleRevoke(cert.certId)}

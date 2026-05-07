@@ -236,7 +236,49 @@ exports.updateCertificate = async (req, res, next) => {
     }
 };
 
+exports.resendCertificateEmail = async (req, res, next) => {
+    try {
+        const certificate = await Certificate.findOne({ certId: req.params.certId });
+        if (!certificate) {
+            return res.status(404).json({ success: false, message: 'Certificate not found' });
+        }
+
+        if (!certificate.recipientEmail) {
+            return res.status(400).json({ success: false, message: 'No recipient email associated with this certificate' });
+        }
+
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const verifyUrl = `${frontendUrl}/verify/${certificate.certId}`;
+        
+        const message = `
+            <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                <h2 style="color: #4f46e5;">Certificate Reminder</h2>
+                <p>Hello ${certificate.recipientName},</p>
+                <p>This is a reminder for your <strong>${certificate.certType}</strong> certificate for <strong>${certificate.role}</strong> at ${certificate.issuingOrg}.</p>
+                <p>You can view and verify your digital certificate by clicking the link below:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${verifyUrl}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View Official Certificate</a>
+                </div>
+                <p style="color: #666; font-size: 14px;">Alternatively, you can verify it using this Certificate ID: <br><strong style="color: #000;">${certificate.certId}</strong></p>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                <p style="font-size: 12px; color: #999;">This is an automated message from CredVault. Please do not reply.</p>
+            </div>
+        `;
+
+        await sendEmail({
+            email: certificate.recipientEmail,
+            subject: 'Your Official Certificate (Resent) - CredVault',
+            message
+        });
+
+        res.status(200).json({ success: true, message: 'Email resent successfully!' });
+    } catch (error) {
+        next(error);
+    }
+};
+
 exports.deleteCertificate = async (req, res, next) => {
+
     try {
         const certificate = await Certificate.findOne({ certId: req.params.certId });
         if (!certificate) {
