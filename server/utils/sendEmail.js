@@ -9,7 +9,7 @@ const sendEmail = async (options) => {
     const smtpPass = process.env.SMTP_PASSWORD;
 
     if (smtpUser && smtpPass) {
-        console.log(`Configuring SMTP with ${smtpHost}:${smtpPort}`);
+        console.log(`[Email] Attempting to configure SMTP: ${smtpHost}:${smtpPort}`);
         transporter = nodemailer.createTransport({
             host: smtpHost,
             port: smtpPort,
@@ -18,16 +18,24 @@ const sendEmail = async (options) => {
                 user: smtpUser,
                 pass: smtpPass
             },
-            // Production recommended settings
             pool: true,
             maxConnections: 5,
             maxMessages: 100,
             tls: {
-                rejectUnauthorized: false // Helps with some hosting providers
+                rejectUnauthorized: false
             }
         });
+
+        // Verify connection configuration
+        try {
+            await transporter.verify();
+            console.log('[Email] SMTP Connection Verified Successfully');
+        } catch (verifyError) {
+            console.error('[Email] SMTP Verification Failed:', verifyError.message);
+            // We'll still try to send, but this is a major red flag
+        }
     } else {
-        console.log('No SMTP credentials found, using Ethereal for testing');
+        console.log('[Email] No SMTP credentials found, using Ethereal for testing');
         const testAccount = await nodemailer.createTestAccount();
         transporter = nodemailer.createTransport({
             host: 'smtp.ethereal.email',
@@ -40,27 +48,33 @@ const sendEmail = async (options) => {
         });
     }
 
+    const fromEmail = process.env.SMTP_FROM_EMAIL || smtpUser || 'noreply@credvault.com';
     const mailOptions = {
-        from: `CredVault <${process.env.SMTP_FROM_EMAIL || smtpUser || 'noreply@credvault.com'}>`,
+        from: `CredVault <${fromEmail}>`,
         to: options.email,
         subject: options.subject,
         html: options.message
     };
 
     try {
+        console.log(`[Email] Sending email to: ${options.email}`);
         const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent successfully:', info.messageId);
+        console.log('[Email] Message sent: %s', info.messageId);
         
         if (!smtpUser) {
-            console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+            console.log('[Email] Preview URL: %s', nodemailer.getTestMessageUrl(info));
         }
         
         return info;
     } catch (error) {
-        console.error('Error sending email:', error);
-        throw new Error('Email delivery failed. Please check server logs.');
+        console.error('[Email] Send error:', error.message);
+        if (error.code === 'EAUTH') {
+            console.error('[Email] Authentication failed. Please check SMTP_EMAIL and SMTP_PASSWORD.');
+        }
+        throw new Error(`Email delivery failed: ${error.message}`);
     }
 };
 
 module.exports = sendEmail;
+
 

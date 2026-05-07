@@ -43,31 +43,45 @@ exports.generateCertificate = async (req, res, next) => {
             generatedBy: req.user.id
         });
 
+        let emailSent = false;
         if (recipientEmail) {
             try {
                 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
                 const verifyUrl = `${frontendUrl}/verify/${certId}`;
                 
                 const message = `
-                    <h2>Congratulations ${recipientName}!</h2>
-                    <p>Your <strong>${certType}</strong> certificate for <strong>${role}</strong> at ${issuingOrg} has been successfully generated.</p>
-                    <p>You can view and verify your official digital certificate by clicking the link below:</p>
-                    <a href="${verifyUrl}" style="display: inline-block; padding: 10px 20px; margin-top: 10px; background-color: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 5px;">View Certificate</a>
-                    <p>Alternatively, you can verify it using this Certificate ID: <strong>${certId}</strong> on our portal.</p>
+                    <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                        <h2 style="color: #4f46e5;">Congratulations ${recipientName}!</h2>
+                        <p>Your official <strong>${certType}</strong> certificate for <strong>${role}</strong> at ${issuingOrg} has been successfully generated.</p>
+                        <p>You can view and verify your digital certificate by clicking the link below:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${verifyUrl}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View Official Certificate</a>
+                        </div>
+                        <p style="color: #666; font-size: 14px;">Alternatively, you can verify it using this Certificate ID: <br><strong style="color: #000;">${certId}</strong></p>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                        <p style="font-size: 12px; color: #999;">This is an automated message from CredVault. Please do not reply.</p>
+                    </div>
                 `;
 
                 await sendEmail({
                     email: recipientEmail,
-                    subject: 'Your Certificate has been Generated - CredVault',
+                    subject: 'Your Official Certificate - CredVault',
                     message
                 });
+                emailSent = true;
             } catch (emailError) {
-                console.error('Email could not be sent', emailError);
-
+                console.error(`[Certificate] Email failed for ${recipientEmail}:`, emailError.message);
+                // Certificate is still created, but we mark it as failed in the response
             }
         }
 
-        res.status(201).json({ success: true, data: certificate });
+        res.status(201).json({ 
+            success: true, 
+            data: certificate,
+            emailStatus: emailSent ? 'sent' : 'failed',
+            message: emailSent ? 'Certificate generated and email sent!' : 'Certificate generated but email delivery failed. Please check SMTP settings.'
+        });
+
     } catch (error) {
         next(error);
     }
