@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Zap, Award } from 'lucide-react';
-import axios from 'axios';
+import api from '../api/axiosInstance';
 import Button from '../components/ui/Button';
 
 const Home = () => {
@@ -10,7 +10,7 @@ const Home = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/settings');
+        const res = await api.get('/settings');
         setSettings(res.data.data);
       } catch (error) {
         console.error("Failed to fetch settings", error);
@@ -21,7 +21,7 @@ const Home = () => {
 
   const heroStyle = settings?.heroBackgroundImage 
     ? {
-        backgroundImage: `url(http://localhost:5000${settings.heroBackgroundImage})`,
+        backgroundImage: `url(${import.meta.env.VITE_API_URL || 'https://credvault-kyqn.onrender.com'}${settings.heroBackgroundImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }

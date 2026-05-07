@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/axiosInstance';
 import { ShieldCheck, Search, CheckCircle, XCircle, AlertCircle, Calendar, User, Briefcase, Award, Download, Printer } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -34,7 +34,7 @@ const VerifyCertificate = () => {
     const handleVerify = async (id) => {
         setStatus('loading');
         try {
-            const res = await axios.get(`http://localhost:5000/api/certificates/verify/${id}`);
+            const res = await api.get(`/certificates/verify/${id}`);
             setCertificate(res.data.data);
             if (res.data.data.status === 'revoked') {
                 setStatus('revoked');

@@ -28,7 +28,7 @@ const Settings = () => {
             try {
                 const res = await api.get('/settings');
                 if (res.data.data.heroBackgroundImage) {
-                    setHeroImagePreview(`http://localhost:5000${res.data.data.heroBackgroundImage}`);
+                    setHeroImagePreview(`${import.meta.env.VITE_API_URL || 'https://credvault-kyqn.onrender.com'}${res.data.data.heroBackgroundImage}`);
                 }
                 if (res.data.data.heroOverlayOpacity !== undefined) {
                     setHeroOpacity(res.data.data.heroOverlayOpacity);
