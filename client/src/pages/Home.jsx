@@ -19,9 +19,16 @@ const Home = () => {
     fetchSettings();
   }, []);
 
+  const getHeroUrl = (path) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const baseUrl = import.meta.env.VITE_API_URL || 'https://credvault-kyqn.onrender.com';
+    return `${baseUrl}${path}`;
+  };
+
   const heroStyle = settings?.heroBackgroundImage 
     ? {
-        backgroundImage: `url(${import.meta.env.VITE_API_URL || 'https://credvault-kyqn.onrender.com'}${settings.heroBackgroundImage})`,
+        backgroundImage: `url(${getHeroUrl(settings.heroBackgroundImage)})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }

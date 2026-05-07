@@ -23,13 +23,19 @@ const Settings = () => {
     const [status, setStatus] = useState({ type: '', message: '' });
     const [loading, setLoading] = useState(false);
 
+    const getHeroUrl = (path) => {
+        if (!path) return '';
+        if (path.startsWith('http')) return path;
+        const baseUrl = import.meta.env.VITE_API_URL || 'https://credvault-kyqn.onrender.com';
+        return `${baseUrl}${path}`;
+    };
+
     useEffect(() => {
         const fetchSettings = async () => {
             try {
                 const res = await api.get('/settings');
-                const baseUrl = import.meta.env.VITE_API_URL || 'https://credvault-kyqn.onrender.com';
                 if (res.data.data.heroBackgroundImage) {
-                    setHeroImagePreview(`${baseUrl}${res.data.data.heroBackgroundImage}`);
+                    setHeroImagePreview(getHeroUrl(res.data.data.heroBackgroundImage));
                 }
                 if (res.data.data.heroOverlayOpacity !== undefined) {
                     setHeroOpacity(res.data.data.heroOverlayOpacity);
@@ -40,6 +46,7 @@ const Settings = () => {
         };
         fetchSettings();
     }, []);
+
 
 
     const handleProfileUpdate = async (e) => {
@@ -97,9 +104,9 @@ const Settings = () => {
             
             // Update preview with the new GridFS URL
             if (res.data.data.heroBackgroundImage) {
-                const baseUrl = import.meta.env.VITE_API_URL || 'https://credvault-kyqn.onrender.com';
-                setHeroImagePreview(`${baseUrl}${res.data.data.heroBackgroundImage}`);
+                setHeroImagePreview(getHeroUrl(res.data.data.heroBackgroundImage));
             }
+
             
             setStatus({ type: 'success', message: 'Hero image updated successfully and saved to database!' });
             setHeroImage(null); // Clear the file input state

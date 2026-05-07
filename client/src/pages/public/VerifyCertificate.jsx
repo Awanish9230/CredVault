@@ -32,9 +32,13 @@ const VerifyCertificate = () => {
     };
 
     const handleVerify = async (id) => {
+        const cleanId = id.trim().toUpperCase();
         setStatus('loading');
+        console.log(`[Verify] Checking Certificate ID: ${cleanId}`);
+        
         try {
-            const res = await api.get(`/certificates/verify/${id}`);
+            const res = await api.get(`/certificates/verify/${cleanId}`);
+            console.log('[Verify] Success:', res.data.data);
             setCertificate(res.data.data);
             if (res.data.data.status === 'revoked') {
                 setStatus('revoked');
@@ -42,10 +46,12 @@ const VerifyCertificate = () => {
                 setStatus('valid');
             }
         } catch (error) {
+            console.error('[Verify] Error:', error.response?.data?.message || error.message);
             setStatus('not-found');
             setCertificate(null);
         }
     };
+
 
     const downloadPDF = async () => {
         if (!certRef.current) return;
@@ -123,51 +129,72 @@ const VerifyCertificate = () => {
                     <div className="w-full max-w-5xl space-y-8 animate-slide-up">
                         <div className="flex flex-col md:flex-row gap-8 items-start justify-center">
 
-                            <div className="flex-1 flex flex-col items-center">
-                                <div className="bg-white p-4 rounded-2xl shadow-2xl border border-border overflow-hidden scale-[0.4] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 origin-top">
-                                    <div ref={certRef}>
-                                        <CertificateTemplate data={{
-                                            ...certificate,
-                                            issueDate: certificate.createdAt
-                                        }} id="public-cert-view" />
+                            <div className="flex-1 w-full flex flex-col items-center">
+                                <div className="w-full bg-white p-4 sm:p-8 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-border overflow-hidden flex justify-center">
+                                    <div className="scale-[0.45] sm:scale-[0.65] md:scale-[0.85] lg:scale-100 origin-center py-10 sm:py-0">
+                                        <div ref={certRef}>
+                                            <CertificateTemplate data={{
+                                                ...certificate,
+                                                issueDate: certificate.createdAt
+                                            }} id="public-cert-view" />
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="mt-4 flex gap-4">
-                                    <Button onClick={downloadPDF} disabled={isDownloading} className="gap-2">
-                                        {isDownloading ? 'Generating...' : <><Download size={18}/> Download PDF</>}
+                                <div className="mt-8 flex gap-4 no-print">
+                                    <Button onClick={downloadPDF} disabled={isDownloading} className="gap-2 px-8 py-6 rounded-2xl shadow-lg shadow-primary/20">
+                                        {isDownloading ? 'Generating...' : <><Download size={20}/> Download PDF</>}
                                     </Button>
-                                    <Button variant="outline" onClick={() => window.print()} className="gap-2">
-                                        <Printer size={18}/> Print
+                                    <Button variant="outline" onClick={() => window.print()} className="gap-2 px-8 py-6 rounded-2xl">
+                                        <Printer size={20}/> Print
                                     </Button>
                                 </div>
                             </div>
 
+                            <div className="w-full md:w-[350px] space-y-6 no-print">
+                                <Card className="overflow-hidden border-none shadow-[0_10px_40px_rgba(34,197,94,0.15)] ring-1 ring-green-500/20">
+                                    <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 flex flex-col items-center text-center gap-3 text-white">
+                                        <div className="bg-white/20 p-3 rounded-full backdrop-blur-md">
+                                            <CheckCircle size={40} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-2xl font-bold">Verified</h2>
+                                            <p className="text-white/80 text-sm font-medium">Authenticity confirmed</p>
+                                        </div>
+                                    </div>
+                                    <div className="p-8 space-y-6 bg-white">
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] text-muted uppercase font-bold tracking-[0.1em]">Issued To</p>
+                                            <p className="text-xl font-bold text-heading">{certificate.recipientName}</p>
+                                        </div>
+                                        <div className="h-px bg-border/50"></div>
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] text-muted uppercase font-bold tracking-[0.1em]">Type</p>
+                                                <p className="font-bold text-primary">{certificate.certType}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] text-muted uppercase font-bold tracking-[0.1em]">Date</p>
+                                                <p className="font-bold text-heading">{new Date(certificate.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}</p>
+                                            </div>
+                                        </div>
+                                        <div className="h-px bg-border/50"></div>
+                                        <div className="space-y-2">
+                                            <p className="text-[10px] text-muted uppercase font-bold tracking-[0.1em]">Credential ID</p>
+                                            <p className="font-mono text-xs font-bold bg-soft px-3 py-2 rounded-xl border border-border text-heading break-all">{certificate.certId}</p>
+                                        </div>
+                                    </div>
+                                </Card>
 
-                            <Card className="w-full max-w-sm overflow-hidden border border-green-200">
-                                <div className="bg-green-50 border-b border-green-100 p-6 flex flex-col items-center text-center gap-2 text-green-700">
-                                    <CheckCircle size={48} className="mb-2" />
-                                    <h2 className="text-xl font-bold">Certificate Verified</h2>
-                                    <p className="text-green-600 text-sm font-medium">Authenticity confirmed by CredVault</p>
-                                </div>
-                                <div className="p-6 space-y-4">
-                                    <div className="pb-4 border-b border-border">
-                                        <p className="text-xs text-muted uppercase tracking-wider mb-1">Issued To</p>
-                                        <p className="text-lg font-bold text-heading">{certificate.recipientName}</p>
-                                    </div>
-                                    <div className="pb-4 border-b border-border">
-                                        <p className="text-xs text-muted uppercase tracking-wider mb-1">Credential Type</p>
-                                        <p className="font-semibold text-primary">{certificate.certType}</p>
-                                    </div>
-                                    <div className="pb-4 border-b border-border">
-                                        <p className="text-xs text-muted uppercase tracking-wider mb-1">Issue Date</p>
-                                        <p className="font-medium text-heading">{new Date(certificate.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</p>
+                                <div className="bg-white/50 backdrop-blur-sm p-6 rounded-3xl border border-border flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                        <ShieldCheck size={24} />
                                     </div>
                                     <div>
-                                        <p className="text-xs text-muted uppercase tracking-wider mb-1">Certificate ID</p>
-                                        <p className="font-mono text-xs font-bold bg-soft p-2 rounded border border-border text-heading">{certificate.certId}</p>
+                                        <p className="text-xs font-bold text-heading">Tamper-Proof</p>
+                                        <p className="text-[10px] text-body">Secured by CredVault Digital Signature</p>
                                     </div>
                                 </div>
-                            </Card>
+                            </div>
                         </div>
                     </div>
                 )}
