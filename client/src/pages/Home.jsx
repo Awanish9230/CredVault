@@ -48,7 +48,7 @@ const Home = () => {
         className="flex-1 flex flex-col items-center justify-center text-center px-4 py-20 relative overflow-hidden"
         style={heroStyle}
       >
-        {/* Overlay for readability if background image exists */}
+
         {settings?.heroBackgroundImage && (
           <div 
             className="absolute inset-0 bg-white backdrop-blur-[2px] z-0 transition-opacity duration-300" 

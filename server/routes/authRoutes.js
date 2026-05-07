@@ -8,6 +8,6 @@ router.post('/login', login);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
 router.put('/password', protect, updatePassword);
-router.post('/seed', seedAdmin); // Route to seed admin for local dev
+router.post('/seed', seedAdmin);
 
 module.exports = router;

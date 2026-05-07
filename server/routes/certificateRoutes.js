@@ -14,7 +14,7 @@ const router = express.Router();
 
 router.get('/verify/:certId', verifyCertificate);
 
-router.use(protect); // All routes below require auth
+router.use(protect);
 
 router.post('/generate', generateCertificate);
 router.get('/', getCertificates);

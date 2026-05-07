@@ -21,7 +21,7 @@ const ManageCertificates = () => {
     const [endDate, setEndDate] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
 
-    // Modal states
+
     const [viewModal, setViewModal] = useState(false);
     const [editModal, setEditModal] = useState(false);
     const [selectedCert, setSelectedCert] = useState(null);
@@ -132,7 +132,7 @@ const ManageCertificates = () => {
                 </div>
             </header>
 
-            {/* Filters */}
+
             <Card className="p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="relative">
@@ -181,7 +181,7 @@ const ManageCertificates = () => {
                 </div>
             </Card>
 
-            {/* Table */}
+
             <Card className="p-0 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -264,7 +264,7 @@ const ManageCertificates = () => {
                     </table>
                 </div>
 
-                {/* Pagination */}
+
                 <div className="px-6 py-4 bg-soft/30 border-t border-border flex items-center justify-between">
                     <p className="text-sm text-muted">
                         Showing <span className="font-bold text-heading">{(page-1)*limit + 1}</span> to <span className="font-bold text-heading">{Math.min(page*limit, total)}</span> of <span className="font-bold text-heading">{total}</span> results
@@ -290,7 +290,7 @@ const ManageCertificates = () => {
                 </div>
             </Card>
 
-            {/* View Modal */}
+
             <Modal 
                 isOpen={viewModal} 
                 onClose={() => setViewModal(false)} 
@@ -319,7 +319,7 @@ const ManageCertificates = () => {
                 )}
             </Modal>
 
-            {/* Edit Modal */}
+
             <Modal 
                 isOpen={editModal} 
                 onClose={() => setEditModal(false)} 

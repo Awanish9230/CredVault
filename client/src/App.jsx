@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 
-// Pages
+
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/admin/Dashboard';
@@ -11,7 +11,7 @@ import ManageCertificates from './pages/admin/ManageCertificates';
 import Settings from './pages/admin/Settings';
 import VerifyCertificate from './pages/public/VerifyCertificate';
 
-// Layout
+
 import AdminLayout from './components/layout/AdminLayout';
 
 const ProtectedRoute = ({ children }) => {
@@ -31,7 +31,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/verify/:certId?" element={<VerifyCertificate />} />
         
-        {/* Admin Routes */}
+
         <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="generate" element={<GenerateCertificate />} />

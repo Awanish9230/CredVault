@@ -14,7 +14,7 @@ const VerifyCertificate = () => {
     const navigate = useNavigate();
     const certRef = useRef(null);
     const [searchId, setSearchId] = useState(certId || '');
-    const [status, setStatus] = useState('idle'); // idle, loading, valid, revoked, not-found
+    const [status, setStatus] = useState('idle');
     const [certificate, setCertificate] = useState(null);
     const [isDownloading, setIsDownloading] = useState(false);
 
@@ -122,7 +122,7 @@ const VerifyCertificate = () => {
                 {status === 'valid' && certificate && (
                     <div className="w-full max-w-5xl space-y-8 animate-slide-up">
                         <div className="flex flex-col md:flex-row gap-8 items-start justify-center">
-                            {/* Certificate Preview */}
+
                             <div className="flex-1 flex flex-col items-center">
                                 <div className="bg-white p-4 rounded-2xl shadow-2xl border border-border overflow-hidden scale-[0.4] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 origin-top">
                                     <div ref={certRef}>
@@ -142,7 +142,7 @@ const VerifyCertificate = () => {
                                 </div>
                             </div>
 
-                            {/* Validation Details */}
+
                             <Card className="w-full max-w-sm overflow-hidden border border-green-200">
                                 <div className="bg-green-50 border-b border-green-100 p-6 flex flex-col items-center text-center gap-2 text-green-700">
                                     <CheckCircle size={48} className="mb-2" />

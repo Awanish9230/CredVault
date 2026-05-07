@@ -2,9 +2,6 @@ const Settings = require('../models/Settings');
 const path = require('path');
 const fs = require('fs');
 
-// @desc    Get site settings
-// @route   GET /api/settings
-// @access  Public
 exports.getSettings = async (req, res, next) => {
     try {
         let settings = await Settings.findOne();
@@ -17,9 +14,6 @@ exports.getSettings = async (req, res, next) => {
     }
 };
 
-// @desc    Update hero background image
-// @route   PUT /api/settings/hero-image
-// @access  Private (Admin)
 exports.updateHeroImage = async (req, res, next) => {
     try {
         if (!req.file) {
@@ -31,7 +25,6 @@ exports.updateHeroImage = async (req, res, next) => {
             settings = await Settings.create({});
         }
 
-        // Delete old image if it exists
         if (settings.heroBackgroundImage) {
             const oldPath = path.join(__dirname, '..', settings.heroBackgroundImage);
             if (fs.existsSync(oldPath)) {
@@ -48,9 +41,6 @@ exports.updateHeroImage = async (req, res, next) => {
     }
 };
 
-// @desc    Update general settings
-// @route   PUT /api/settings
-// @access  Private (Admin)
 exports.updateSettings = async (req, res, next) => {
     try {
         let settings = await Settings.findOne();

@@ -22,7 +22,7 @@ const Dashboard = () => {
         fetchStats();
     }, []);
 
-    // Mock data for chart since we don't have time series endpoint yet
+
     const chartData = [
         { name: 'Jan', certs: 12 }, { name: 'Feb', certs: 28 },
         { name: 'Mar', certs: 45 }, { name: 'Apr', certs: 60 },

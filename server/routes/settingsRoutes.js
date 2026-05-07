@@ -6,7 +6,6 @@ const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Multer storage config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'uploads/');

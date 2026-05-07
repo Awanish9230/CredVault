@@ -59,7 +59,7 @@ const GenerateCertificate = () => {
         const canvas = await html2canvas(element, { scale: 2 });
         const imgData = canvas.toDataURL('image/png');
         
-        // 800x600px -> A4 Landscape (~297x210mm)
+
         const pdf = new jsPDF('landscape', 'px', [800, 600]);
         pdf.addImage(imgData, 'PNG', 0, 0, 800, 600);
         pdf.save(`${generatedCert.recipientName.replace(/\s+/g, '_')}_Certificate.pdf`);
@@ -79,7 +79,7 @@ const GenerateCertificate = () => {
 
     return (
         <div className="flex flex-col xl:flex-row gap-8 animate-fade-in">
-            {/* Form Section */}
+
             <div className="w-full xl:w-1/3 flex flex-col gap-6">
                 <header>
                     <h1 className="text-3xl font-bold text-heading">Generate Certificate</h1>
@@ -148,7 +148,7 @@ const GenerateCertificate = () => {
                 </Card>
             </div>
 
-            {/* Preview Section */}
+
             <div className="w-full xl:w-2/3 flex flex-col gap-4">
                 <div className="flex justify-between items-end">
                     <h2 className="text-xl font-semibold text-heading">Live Preview</h2>
@@ -174,7 +174,7 @@ const GenerateCertificate = () => {
     );
 };
 
-// Assuming CheckCircle is imported from lucide-react, I will add it.
+
 import { CheckCircle } from 'lucide-react';
 
 export default GenerateCertificate;

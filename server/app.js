@@ -14,9 +14,8 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
 app.use(helmet({
-    crossOriginResourcePolicy: false, // Allow loading images from different origins
+    crossOriginResourcePolicy: false,
 }));
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -28,7 +27,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));
 
-// Express 5 compatibility for express-mongo-sanitize
 app.use((req, res, next) => {
     ['body', 'params', 'headers', 'query'].forEach(function (key) {
         if (req[key]) {
@@ -41,22 +39,18 @@ if (process.env.NODE_ENV !== 'production') {
     app.use(morgan('dev'));
 }
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/settings', settingsRoutes);
 
-// Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date() });
 });
 
-// 404 handler
 app.use((req, res) => {
     res.status(404).json({ success: false, message: 'API route not found' });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(err.statusCode || 500).json({

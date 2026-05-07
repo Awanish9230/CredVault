@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true, lowercase: true },
-  password: { type: String, required: true }, // bcrypt hashed
+  password: { type: String, required: true },
   role: { type: String, enum: ['superadmin', 'admin', 'viewer'], default: 'admin' },
   organisation: { type: String, default: 'CredVault Org' },
   isActive: { type: Boolean, default: true },

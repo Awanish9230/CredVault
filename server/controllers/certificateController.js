@@ -2,7 +2,6 @@ const Certificate = require('../models/Certificate');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 
-// Generate unique cert ID
 const generateCertId = (type) => {
     const year = new Date().getFullYear();
     const randomHex = crypto.randomBytes(3).toString('hex').toUpperCase(); // 6 chars
@@ -19,9 +18,6 @@ const generateCertId = (type) => {
     return `CV-${year}-${typeCode}-${randomHex}`;
 };
 
-// @desc    Generate a new certificate
-// @route   POST /api/certificates/generate
-// @access  Private
 exports.generateCertificate = async (req, res, next) => {
     try {
         const {
@@ -47,7 +43,6 @@ exports.generateCertificate = async (req, res, next) => {
             generatedBy: req.user.id
         });
 
-        // Send email with the certificate link
         if (recipientEmail) {
             try {
                 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -68,7 +63,7 @@ exports.generateCertificate = async (req, res, next) => {
                 });
             } catch (emailError) {
                 console.error('Email could not be sent', emailError);
-                // We still return 201 as the cert was generated, even if email failed
+
             }
         }
 
@@ -78,9 +73,6 @@ exports.generateCertificate = async (req, res, next) => {
     }
 };
 
-// @desc    Verify a certificate by ID
-// @route   GET /api/certificates/verify/:certId
-// @access  Public
 exports.verifyCertificate = async (req, res, next) => {
     try {
         const certificate = await Certificate.findOne({ certId: req.params.certId });
@@ -89,7 +81,6 @@ exports.verifyCertificate = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Certificate not found' });
         }
 
-        // Increment verify count
         certificate.verifyCount += 1;
         await certificate.save();
 
@@ -99,9 +90,6 @@ exports.verifyCertificate = async (req, res, next) => {
     }
 };
 
-// @desc    Get all certificates (with pagination/filtering)
-// @route   GET /api/certificates
-// @access  Private
 exports.getCertificates = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page, 10) || 1;
@@ -110,7 +98,6 @@ exports.getCertificates = async (req, res, next) => {
 
         const filter = {};
         
-        // Search filter
         if (req.query.search) {
             filter.$or = [
                 { recipientName: { $regex: req.query.search, $options: 'i' } },
@@ -118,12 +105,10 @@ exports.getCertificates = async (req, res, next) => {
             ];
         }
         
-        // Status filter
         if (req.query.status) {
             filter.status = req.query.status;
         }
 
-        // Date filters
         const now = new Date();
         if (req.query.dateRange === 'today') {
             const startOfToday = new Date(now.setHours(0,0,0,0));
@@ -160,9 +145,6 @@ exports.getCertificates = async (req, res, next) => {
     }
 };
 
-// @desc    Get Dashboard Stats
-// @route   GET /api/certificates/stats
-// @access  Private
 exports.getStats = async (req, res, next) => {
     try {
         const totalCertificates = await Certificate.countDocuments();
@@ -173,18 +155,15 @@ exports.getStats = async (req, res, next) => {
         
         const thisMonthCount = await Certificate.countDocuments({ createdAt: { $gte: startOfMonth } });
         
-        // Count all verifications sum
         const verifyAggregate = await Certificate.aggregate([
             { $group: { _id: null, totalVerifications: { $sum: '$verifyCount' } } }
         ]);
         const totalVerifications = verifyAggregate.length > 0 ? verifyAggregate[0].totalVerifications : 0;
 
-        // Get recent certificates
         const recentCertificates = await Certificate.find()
             .sort({ createdAt: -1 })
             .limit(5);
 
-        // Group by type for charts
         const typeStats = await Certificate.aggregate([
             { $group: { _id: '$certType', count: { $sum: 1 } } }
         ]);
@@ -204,9 +183,6 @@ exports.getStats = async (req, res, next) => {
     }
 };
 
-// @desc    Revoke a certificate
-// @route   PATCH /api/certificates/:certId/revoke
-// @access  Private (Admin)
 exports.revokeCertificate = async (req, res, next) => {
     try {
         const { reason } = req.body;
@@ -227,9 +203,6 @@ exports.revokeCertificate = async (req, res, next) => {
     }
 };
 
-// @desc    Update a certificate
-// @route   PUT /api/certificates/:certId
-// @access  Private (Admin)
 exports.updateCertificate = async (req, res, next) => {
     try {
         let certificate = await Certificate.findOne({ certId: req.params.certId });
@@ -249,9 +222,6 @@ exports.updateCertificate = async (req, res, next) => {
     }
 };
 
-// @desc    Delete a certificate
-// @route   DELETE /api/certificates/:certId
-// @access  Private (Admin)
 exports.deleteCertificate = async (req, res, next) => {
     try {
         const certificate = await Certificate.findOne({ certId: req.params.certId });
