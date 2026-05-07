@@ -1,11 +1,10 @@
 const sendEmail = async (options) => {
-    // Ensure API Key is trimmed of any hidden spaces
     const apiKey = (process.env.SMTP_PASSWORD || '').trim();
     const fromEmail = (process.env.SMTP_FROM_EMAIL || process.env.SMTP_EMAIL || '').trim();
 
-    if (!apiKey || apiKey.startsWith('xsmtpsib') === false) {
-        console.warn('[Email] Valid Brevo API Key not found. Please ensure SMTP_PASSWORD is set in Render.');
-        return { messageId: 'log-only' };
+    if (!apiKey) {
+        console.warn('[Email] SMTP_PASSWORD (API Key) is missing.');
+        return { messageId: 'missing-key' };
     }
 
     console.log(`[Email] Sending via Brevo API | From: ${fromEmail} | To: ${options.email}`);
@@ -15,13 +14,13 @@ const sendEmail = async (options) => {
             method: 'POST',
             headers: {
                 'api-key': apiKey,
-                'content-type': 'application/json',
-                'accept': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 sender: { 
                     name: 'CredVault', 
-                    email: fromEmail || 'noreply@credvault.com' 
+                    email: fromEmail 
                 },
                 to: [{ email: options.email }],
                 subject: options.subject,
@@ -35,20 +34,22 @@ const sendEmail = async (options) => {
             console.log('[Email] Success! Message ID:', data.messageId);
             return data;
         } else {
-            // "Key not found" often means the sender email is not verified in Brevo
-            console.error('[Email] Brevo API Error:', data.message || data.code || 'Unknown Error');
-            if (data.message === 'Key not found' || data.code === 'unauthorized') {
-                console.error('[Email] IMPORTANT: Check if ' + fromEmail + ' is a VERIFIED SENDER in your Brevo Dashboard.');
+            console.error('[Email] Brevo API Error Detail:', JSON.stringify(data));
+            
+            if (data.code === 'unauthorized' || data.message === 'Key not found') {
+                console.error('[Email] CRITICAL: The API Key is invalid or the Sender Email is not verified in Brevo.');
             }
-            throw new Error(data.message || 'Brevo API request failed');
+            
+            throw new Error(data.message || 'Brevo API error');
         }
     } catch (error) {
-        console.error('[Email] Critical error:', error.message);
+        console.error('[Email] Error:', error.message);
         throw new Error(`Email failed: ${error.message}`);
     }
 };
 
 module.exports = sendEmail;
+
 
 
 
