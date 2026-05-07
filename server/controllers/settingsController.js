@@ -49,7 +49,7 @@ exports.updateSettings = async (req, res, next) => {
         }
 
         settings = await Settings.findOneAndUpdate({}, req.body, {
-            new: true,
+            returnDocument: 'after',
             runValidators: true
         });
 

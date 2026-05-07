@@ -213,7 +213,7 @@ exports.updateCertificate = async (req, res, next) => {
         certificate = await Certificate.findOneAndUpdate(
             { certId: req.params.certId },
             req.body,
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
 
         res.status(200).json({ success: true, data: certificate });
